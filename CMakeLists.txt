@@ -86,11 +86,26 @@ if(BUILD_TESTING)
         endif()
     endforeach()
 
-    add_executable(order_cache_tests tests/OrderCacheTests.cpp)
+    add_executable(
+        order_cache_tests
+        tests/OrderCacheTests.cpp
+        tests/CancellationTests.cpp
+        tests/MatchingTests.cpp
+        tests/AssignmentExamplesTests.cpp
+        tests/StateTransitionTests.cpp
+        tests/ExhaustiveMatchingTests.cpp
+        tests/TestSupportTests.cpp
+        tests/support/OrderCacheTestSupport.cpp
+        tests/support/MatchingOracle.cpp
+    )
     target_link_libraries(order_cache_tests PRIVATE order_cache::order_cache GTest::gtest_main)
     order_cache_enable_warnings(order_cache_tests)
     order_cache_enable_sanitizers(order_cache_tests)
 
     include(GoogleTest)
-    gtest_discover_tests(order_cache_tests)
+    gtest_discover_tests(
+        order_cache_tests NO_PRETTY_VALUES
+        PROPERTIES LABELS "single-threaded"
+        TIMEOUT 30
+    )
 endif()
