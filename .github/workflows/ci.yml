@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Clang 22 and formatters
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            clang-22 \
+            clang-format-22 \
+            clang-tidy-22 \
+            cmake-format \
+            libc++-22-dev \
+            libc++abi-22-dev \
+            libclang-rt-22-dev \
+            lld-22 \
+            shfmt
+
+          mkdir -p "${RUNNER_TEMP}/llvm-22"
+          ln -s /usr/bin/clang++-22 "${RUNNER_TEMP}/llvm-22/clang++"
+          ln -s /usr/bin/clang-format-22 "${RUNNER_TEMP}/llvm-22/clang-format"
+          ln -s /usr/bin/clang-tidy-22 "${RUNNER_TEMP}/llvm-22/clang-tidy"
+          ln -s /usr/bin/ld.lld-22 "${RUNNER_TEMP}/llvm-22/ld.lld"
+          echo "${RUNNER_TEMP}/llvm-22" >> "${GITHUB_PATH}"
+
+      - name: C++ formatting
+        run: ./scripts/check.sh format-cpp
+
+      - name: CMake formatting
+        run: ./scripts/check.sh format-cmake
+
+      - name: Shell formatting
+        run: ./scripts/check.sh format-shell
+
+      - name: Build
+        run: ./scripts/check.sh build
+
+      - name: clang-tidy
+        run: ./scripts/check.sh tidy
+
+      - name: Tests
+        run: ./scripts/check.sh test
