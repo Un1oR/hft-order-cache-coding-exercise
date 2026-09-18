@@ -95,6 +95,9 @@ if(BUILD_TESTING)
         tests/StateTransitionTests.cpp
         tests/ExhaustiveMatchingTests.cpp
         tests/TestSupportTests.cpp
+        tests/LargeBookTests.cpp
+        tests/ImplementationPolicyTests.cpp
+        tests/support/FlowOracle.cpp
         tests/support/OrderCacheTestSupport.cpp
         tests/support/MatchingOracle.cpp
     )
@@ -103,8 +106,44 @@ if(BUILD_TESTING)
     order_cache_enable_sanitizers(order_cache_tests)
 
     include(GoogleTest)
+    add_executable(
+        order_cache_component_tests
+        tests/internal/SlotPoolTests.cpp
+        tests/internal/IndexStorageTests.cpp
+        tests/internal/QuantityIndexTests.cpp
+        tests/internal/OrderRemovalRangeTests.cpp
+        tests/internal/CompanyIndexTests.cpp
+        tests/internal/IndexedHeapTests.cpp
+        tests/internal/CompanyBatchTests.cpp
+        tests/internal/ScopeRollbackTests.cpp
+    )
+    target_include_directories(order_cache_component_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(order_cache_component_tests PRIVATE order_cache::order_cache GTest::gtest_main)
+    order_cache_enable_warnings(order_cache_component_tests)
+    order_cache_enable_sanitizers(order_cache_component_tests)
+    gtest_discover_tests(
+        order_cache_component_tests NO_PRETTY_TYPES NO_PRETTY_VALUES
+        TEST_PREFIX "Components."
+        PROPERTIES LABELS "single-threaded"
+        TIMEOUT 30
+    )
+
     gtest_discover_tests(
         order_cache_tests NO_PRETTY_VALUES
+        PROPERTIES LABELS "single-threaded"
+        TIMEOUT 30
+    )
+
+    # Global allocation replacement is isolated from all other tests and the library.
+    add_executable(
+        order_cache_allocation_tests tests/internal/InsertionRollbackTests.cpp tests/internal/AllocationFailure.cpp
+    )
+    target_link_libraries(order_cache_allocation_tests PRIVATE order_cache::order_cache GTest::gtest_main)
+    order_cache_enable_warnings(order_cache_allocation_tests)
+    order_cache_enable_sanitizers(order_cache_allocation_tests)
+    gtest_discover_tests(
+        order_cache_allocation_tests
+        TEST_PREFIX "Allocation."
         PROPERTIES LABELS "single-threaded"
         TIMEOUT 30
     )

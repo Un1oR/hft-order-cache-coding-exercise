@@ -49,6 +49,28 @@ public:
 		return m_qty;
 	}
 
+	// Non-copying access for cache indexes; the original value-returning API is unchanged.
+	[[nodiscard]] const std::string & orderIdRef() const noexcept
+	{
+		return m_orderId;
+	}
+	[[nodiscard]] const std::string & securityIdRef() const noexcept
+	{
+		return m_securityId;
+	}
+	[[nodiscard]] const std::string & sideRef() const noexcept
+	{
+		return m_side;
+	}
+	[[nodiscard]] const std::string & userRef() const noexcept
+	{
+		return m_user;
+	}
+	[[nodiscard]] const std::string & companyRef() const noexcept
+	{
+		return m_company;
+	}
+
 private:
 	// use the below to hold the order data
 	// do not remove the these member variables

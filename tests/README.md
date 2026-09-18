@@ -4,6 +4,13 @@ The original suite started with a verified red phase (143 failed / 16 passed
 against the stub). The same public expectations now run once through
 `makeOrderCache()`. Each test creates an independent cache.
 
+Additional `internal/` tests use a private `src/` include path; implementation
+headers are not added to the public include directory. `LargeBookTests.cpp` adds
+large mutation histories with an independent flow oracle, and
+`ImplementationPolicyTests.cpp` separately records decisions left unspecified by
+the assignment. The historical red-phase instructions below describe the suite's
+starting point, not an expected failure of the implemented cache.
+
 The requirements come from `../task/ReadMe` and `../task/OrderCache.h`. The original contract suite
 tests only `OrderCacheInterface`, created through the production factory `makeOrderCache()`.
 The original contract tests do not access the concrete class or internal indexes.
@@ -167,3 +174,32 @@ A practical implementation order is storage/snapshots → cancellation and its
 boundaries → simple matching rules → maximum and order independence → invalidation
 and histories → large-quantity arithmetic. The tests remain black-box checks at
 every stage.
+
+## Private component checks
+
+`QuantityIndexTests.cpp` checks reverse positions, non-prefix threshold selection,
+sparse/dense removal and reuse after mutations. `IndexedHeapTests.cpp` rejects
+malformed or throwing callbacks at compile time.
+
+`CompanyIndexTests.cpp` and `CompanyBatchTests.cpp` check changing leaders,
+sparse/dense batches, empty groups, zero-total live companies, reverse positions,
+aborted creation and repeated whole-cache group reuse.
+
+`ScopeRollbackTests.cpp` checks normal/exceptional exits, commit, new-versus-existing
+ownership, reverse cleanup order and callback contracts. A separate executable
+links `InsertionRollbackTests.cpp` with `AllocationFailure.cpp`. Only that process
+replaces ordinary global allocation functions. It fails each successive allocation
+inside `addOrder`, then disables injection before assertions. Checks cover cold
+insertion, new/existing group combinations and block/directory growth; failures
+must preserve orders/matching and permit ID reuse and retries. Over-aligned
+allocation uses its normal path. No test hook is linked into production code.
+
+`IndexStorageTests.cpp` checks guarded single appends/map insertions and the
+swap-pop helper's reverse-position updates. `OrderRemovalRangeTests.cpp` checks
+sized forward traversal, repeated reads before cleanup, current-record destruction,
+and sparse/dense removal followed by slot reuse. Allocation tests additionally
+reject every new allocation throughout all cancellation routes.
+`SlotPoolTests.cpp` checks stable addresses, alignment, freelist reuse and object
+lifetime, including throwing construction, pending-slot rollback and invalid
+type/block-size rejection through constraints. Public contract expectations and
+warning/sanitizer checks remain the same.
